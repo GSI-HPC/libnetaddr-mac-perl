@@ -1,7 +1,7 @@
 Source: libnetaddr-mac-perl
 Section: perl
 Priority: optional
-Maintainer: Felix Jacobi <felix.jacobi@stsbl.de>
+Maintainer: Felix Jacobi <felix.jacobi@iserv.eu>
 Build-Depends: debhelper (>= 9)
 Build-Depends-Indep: perl
 Standards-Version: 3.9.8
@@ -34,5 +34,4 @@ Description: MAC address functions and object
  FDDI
  .
  ATM
- .
- This description was automagically extracted from the module by dh-make-perl.
+Tag: devel::lang:perl, devel::library, implemented-in::perl, interface::text-mode, network::configuration, role::devel-lib
