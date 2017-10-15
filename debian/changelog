@@ -1,0 +1,5 @@
+libnetaddr-mac-perl (0.95-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Felix Jacobi <felix.jacobi@stsbl.de>  Mon, 16 Oct 2017 01:47:48 +0200

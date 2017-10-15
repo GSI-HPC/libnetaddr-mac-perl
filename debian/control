@@ -1,0 +1,38 @@
+Source: libnetaddr-mac-perl
+Section: perl
+Priority: optional
+Maintainer: Felix Jacobi <felix.jacobi@stsbl.de>
+Build-Depends: debhelper (>= 9)
+Build-Depends-Indep: perl
+Standards-Version: 3.9.8
+Homepage: https://metacpan.org/release/NetAddr-MAC
+
+Package: libnetaddr-mac-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}
+Description: MAC address functions and object
+ NetAddr::MAC provides an interface to deal with Media Access Control (or MAC)
+ addresses. These are the addresses that uniquely identify a device on various
+ layer 2 networks. Although the most common case is hardware addresses on
+ Ethernet network cards, there are a variety of devices that use this system
+ of addressing.
+ .
+ This module supports both Extended Unique Identifier 48 and 64, addresses and
+ implements an OO and a functional interface.
+ .
+ Some networks that use Extended Unique Identifier 48 (or MAC48) addresses
+ include:
+ .
+ Ethernet
+ .
+ 802.11 wireless networks
+ .
+ Bluetooth
+ .
+ IEEE 802.5 token ring
+ .
+ FDDI
+ .
+ ATM
+ .
+ This description was automagically extracted from the module by dh-make-perl.
