@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 package NetAddr::MAC;
-$NetAddr::MAC::VERSION = '0.95';
+
 
 use Carp qw( croak );
 use List::Util qw( first );
@@ -81,6 +81,154 @@ use vars qw( %EXPORT_TAGS );
 
 Exporter::export_ok_tags( keys %EXPORT_TAGS );
 
+=encoding utf8
+
+=begin stopwords
+
+soe todo
+cisco errstr oui
+fx hsrp HSRPv2 vrrp autoconf
+pgsql unicast
+eui48 eui64
+4th
+
+=end stopwords
+
+=head1 NAME
+
+NetAddr::MAC - Handles hardware MAC Addresses (EUI48 and EUI64)
+
+=head1 SYNOPSIS
+
+ use NetAddr::MAC;
+
+ my $mac = NetAddr::MAC->new( '00:11:22:aa:bb:cc' );
+ my $mac = NetAddr::MAC->new( mac => '0011.22AA.BBCC' );
+
+ print "MAC provided at object creation was: ", $mac->original;
+
+ print "EUI48\n" if $mac->is_eui48;
+ print "EUI64\n" if $mac->is_eui64;
+
+ print "Unicast\n" if $mac->is_unicast;
+ print "Multicast\n" if $mac->is_multicast;
+ print "Broadcast\n" if $mac->is_broadcast;
+
+ print "Locally Administerd\n" if $mac->is_local;
+ print "Universally Administered\n" if $mac->is_universal;
+
+ print 'Basic Format: ',$mac->as_basic,"\n";
+ print 'Bpr Format: ',  $mac->as_bpr,"\n";
+ print 'Cisco Format: ',$mac->as_cisco,"\n";
+ print 'IEEE Format: ', $mac->as_ieee,"\n";
+ print 'IPv6 Address: ',$mac->as_ipv6_suffix,"\n";
+ print 'Microsoft Format: ',$mac->as_microsoft,"\n";
+ print 'Single Dash Format: ',$mac->as_singledash,"\n";
+ print 'Sun Format: ',  $mac->as_sun,"\n";
+ print 'Token Ring Format: ', $mac->as_tokenring,"\n";
+
+
+ use NetAddr::MAC qw( :all );
+
+ my $mac = q/00.11.22.33.44.55/;
+
+ print "EUI48\n" if mac_is_eui48($mac);
+ print "EUI64\n" if mac_is_eui64($mac);
+
+ print "Unicast\n" if mac_is_unicast($mac);
+ print "Multicast\n" if mac_is_multicast($mac);
+ print "Broadcast\n" if mac_is_broadcast($mac);
+
+ print "Locally Administerd\n" if mac_is_local($mac);
+ print "Universally Administered\n" if mac_is_universal($mac);
+
+ print 'Basic Format: ',mac_as_basic($mac),"\n";
+ print 'Bpr Format: ',  mac_as_bpr($mac),"\n";
+ print 'Cisco Format: ',mac_as_cisco($mac),"\n";
+ print 'IEEE Format: ', mac_as_ieee($mac),"\n";
+ print 'IPv6 Address: ',mac_as_ipv6_suffix($mac),"\n";
+ print 'Microsoft Format: ',mac_as_microsoft($mac),"\n";
+ print 'Single Dash Format: ', mac_as_singledash($mac),"\n";
+ print 'Sun Format: ',  mac_as_sun($mac),"\n";
+ print 'Token Ring Format: ',mac_as_tokenring($mac),"\n";
+
+=head1 DESCRIPTION
+
+This module provides an interface to deal with Media Access Control (or MAC)
+addresses.  These are the addresses that uniquely identify a device on
+various layer 2 networks. Although the most common case is hardware addresses
+on Ethernet network cards, there are a variety of devices that use this
+system of addressing.
+
+This module supports both Extended Unique Identifier 48 and 64,
+addresses and implements an OO and a functional interface.
+
+Some networks that use Extended Unique Identifier 48 (or MAC48) addresses include:
+
+ Ethernet
+ 802.11 wireless networks
+ Bluetooth
+ IEEE 802.5 token ring
+ FDDI
+ ATM
+
+Some networks that use Extended Unique Identifier 64 addresses include:
+
+ Firewire
+ IPv6 (sort of)
+ ZigBee / 802.15.4 wireless personal-area networks
+
+=head1 OO METHODS
+
+=head2 NetAddr::MAC->new( mac => $mac )
+
+Creates and returns a new NetAddr::MAC object.  The MAC value is required.
+
+=head2 NetAddr::MAC->new( mac => $mac, %options )
+
+As above, but %options may include any or none of the following
+
+=over 4
+
+=item * die_on_error
+
+If set to true, errors will result in a die (croak) rather than populating I<$errstr>
+
+B<Take care when using the mac_is_* functions!> they will return false in both
+the case of an error and according to the properties of the MAC address. You will
+therefore need to enable die_on_error or check I<$errstr> when false is returned.
+
+=item * priority
+
+This is the bridge priority as an integer, which can also be set by providing a mac
+address in the following format, where 60 is the priority.
+
+ 60#0011.22aa.bbcc
+
+This is a cisco thing, so typically the above is the format you would see. But we
+are flexible enough to handle formats like...
+
+ 60#00:11:22:aa:bb:cc
+ 60#001122aabbcc
+ 60#00-11-22-aa-bb-cc
+ etc.
+
+If priority is provided as an option and as part of the mac address string, an
+error will occur only if they differ.
+
+Priority defaults to 0 if not provided.
+
+=back
+
+=head2 NetAddr::MAC->new( $mac )
+
+Simplified creation method
+
+=head2 NetAddr::MAC->new( $mac, %options )
+
+As above but with %options
+
+=cut
 
 sub new {
 
@@ -251,6 +399,11 @@ sub new {
 
 }
 
+=head2 original
+
+Returns the original B<mac> string as used when creating the MAC object
+
+=cut
 
 sub original {
 
@@ -259,6 +412,14 @@ sub original {
 
 }
 
+=head2 oui
+
+Returns the mac address's Organizationally Unique Identifier (OUI) with dashes
+in Hexadecimal / Canonical format:
+
+ AC-DE-48
+
+=cut
 
 sub oui {
 
@@ -271,6 +432,20 @@ sub oui {
 
 }
 
+=head2 errstr
+
+Returns the error (if one occurred).
+
+This is intended for use with the object. Its not exported at all.
+
+Note: this method is used once the NetAddr::MAC object is successfully
+created. For now the to_eui48 method is the only method that will
+return an error once the object is created.
+
+When creating objects, you will need to catch errors with either the
+I<or> function, or the I<eval> way.
+
+=cut
 
 sub errstr {
 
@@ -280,18 +455,35 @@ sub errstr {
 
 }
 
+=head1 OO PROPERTY METHODS
+
+=head2 is_eui48
+
+Returns true if mac address is determined to be of the EUI48 standard
+
+=cut
 
 sub is_eui48 {
     my $self = shift;
     return scalar @{ $self->{mac} } == EUI48LENGTHDEC
 }
 
+=head2 is_eui64
+
+Returns true if mac address is determined to be of the EUI64 standard
+
+=cut
 
 sub is_eui64 {
     my $self = shift;
     return scalar @{ $self->{mac} } == EUI64LENGTHDEC
 }
 
+=head2 is_multicast
+
+Returns true if mac address is determined to be a multicast address
+
+=cut
 
 sub is_multicast {
     my $self = shift;
@@ -300,6 +492,11 @@ sub is_multicast {
 }
 
 
+=head2 is_broadcast
+
+Returns true if mac address is determined to be a broadcast address
+
+=cut
 
 sub is_broadcast {
     my $self = shift;
@@ -310,6 +507,17 @@ sub is_broadcast {
     return 1
 }
 
+=head2 is_vrrp
+
+Returns true if mac address is determined to be a Virtual Router Redundancy (VRRP) address
+
+i.e. 00-00-5E-00-01-XX
+
+always returns false for eui64.
+
+I'm not quite sure what to do with 01-00-5E-00-00-12, suggestions welcomed.
+
+=cut
 
 sub is_vrrp {
     my $self = shift;
@@ -324,6 +532,15 @@ sub is_vrrp {
 
 }
 
+=head2 is_hsrp
+
+Returns true if mac address is determined to be a Hot Standby Router (HSRP) address
+
+i.e. 00-00-0C-07-AC-XX
+
+always returns false for eui64.
+
+=cut
 
 sub is_hsrp {
     my $self = shift;
@@ -338,6 +555,15 @@ sub is_hsrp {
 
 }
 
+=head2 is_hsrp2
+
+Returns true if mac address is determined to be a Hot Standby Router Version 2 (HSRPv2) address
+
+i.e. 00-00-0C-9F-FX-XX
+
+always returns false for eui64.
+
+=cut
 
 sub is_hsrp2 {
     my $self = shift;
@@ -353,6 +579,19 @@ sub is_hsrp2 {
 }
 
 
+=head2 is_msnlb
+
+Returns true if mac address is determined to be a MS Network Load Balancing MAC address
+
+i.e. 02-BF-1-2-3-4 for unicast or 03-BF-1-2-3-4 for multicast
+
+where 1-2-3-4 is the clusters primary IP address
+
+for outbound packets, clusters members will send from 02-n-1-2-3-4 where n is the node priority. this function does NOT return true for those addresses.
+
+always returns false for eui64.
+
+=cut
 
 sub is_msnlb {
     my $self = shift;
@@ -365,30 +604,61 @@ sub is_msnlb {
 
 }
 
+=head2 is_unicast
+
+Returns true if mac address is determined to be a unicast address
+
+=cut
 
 sub is_unicast {
     my $self = shift;
     return ! ($self->{mac}->[0] & 1);
 }
 
+=head2 is_local
+
+Returns true if mac address is determined to be locally administered
+
+=cut
 
 sub is_local {
     my $self = shift;
     return $self->{mac}->[0] & 2
 }
 
+=head2 is_universal
+
+Returns true if mac address is determined to be universally administered
+
+=cut
 
 sub is_universal {
     my $self = shift;
     return !is_local($self)
 }
 
+=head1 OO NORMALIZATION METHODS
+
+=head2 as_basic
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and without delimiters
+
+ 001122aabbcc
+
+=cut
 
 sub as_basic {
     my $self = shift;
     return join( q{}, map { sprintf( '%02x', $_ ) } @{ $self->{mac} } )
 }
 
+=head2 as_bridge_id
+
+Returns mac address with the priority, a hash, then the mac address normalized with I<as_cisco>
+
+ 45#0011.22aa.bbcc
+
+=cut
 
 sub as_bridge_id {
     my $self = shift;
@@ -397,6 +667,14 @@ sub as_bridge_id {
         . $self->as_cisco;
 }
 
+=head2 as_bpr
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded with B<:> delimiters and with
+B<1,length> leading where I<length> is the number of hex pairs (i.e. 6 for EUI48)
+
+ 1,6,00:11:22:aa:bb:cc
+
+=cut
 
 sub as_bpr {
     my $self = shift;
@@ -406,6 +684,14 @@ sub as_bpr {
       . join( q{:}, map { sprintf( '%02x', $_ ) } @{ $self->{mac} } );
 }
 
+=head2 as_cisco
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<.> delimiting every 2nd octet
+(i.e. after every 4th character)
+.
+ 0011.22aa.bbcc
+
+=cut
 
 sub as_cisco {
     my $self = shift;
@@ -414,12 +700,25 @@ sub as_cisco {
           join( q{}, map { sprintf( '%02x', $_ ) } @{ $self->{mac} } ) )
 }
 
+=head2 as_ieee
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<:> delimiting every octet
+(i.e. after every 2nd character)
+
+ 00:34:56:78:9a:bc
+
+=cut
 
 sub as_ieee {
     my $self = shift;
     return join( q{:}, map { sprintf( '%02x', $_ ) } @{ $self->{mac} } )
 }
 
+=head2 as_ipv6_suffix
+
+Returns the EUI64 address in the format used for an IPv6 autoconf address suffix
+
+=cut
 
 sub as_ipv6_suffix {
 
@@ -451,12 +750,28 @@ sub as_ipv6_suffix {
     );
 }
 
+=head2 as_microsoft
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
+(i.e. after every 2nd character)
+
+ 00-34-56-78-9a-bc
+
+=cut
 
 sub as_microsoft {
     my $self = shift;
     return join( q{-}, map { sprintf( '%02x', $_ ) } @{ $self->{mac} } )
 }
 
+=head2 as_pgsql
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and has a I<:> in the middle of the hex string.
+this appears in the pgsql documentation along with the single dash version
+
+ 001122:334455
+
+=cut
 
 sub as_pgsql {
     my $self = shift;
@@ -474,6 +789,14 @@ sub as_pgsql {
     );
 }
 
+=head2 as_singledash
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and has a dash in the middle of the hex string.
+this appears in the pgsql documentation.
+
+ 001122-334455
+
+=cut
 
 sub as_singledash {
     my $self = shift;
@@ -491,12 +814,28 @@ sub as_singledash {
     );
 }
 
+=head2 as_sun
+
+Returns the mac address normalized as a hexadecimal string that is B<not> padded and with B<-> delimiting every octet
+(i.e. after every 2nd character)
+
+ 0-34-56-78-9a-bc
+
+=cut
 
 sub as_sun {
     my $self = shift;
     return join( q{-}, map { sprintf( '%01x', $_ ) } @{ $self->{mac} } )
 }
 
+=head2 as_tokenring
+
+Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
+(i.e. after every 2nd character) and each octet is bit-reversed order. So 10 00 5A 4D BC 96 becomes 08 00 5A B2 3D 69.
+
+ 00-2d-6a-1e-59-3d
+
+=cut
 
 sub as_tokenring {
 
@@ -504,6 +843,14 @@ sub as_tokenring {
     return join( q{-}, map { (ETHER2TOKEN)[$_] } @{ $self->{mac} } )
 }
 
+=head2 to_eui48
+
+Converts to EUI48 (if the EUI64 was derived from EUI48)
+
+This function will fail if the mac was not derived from EUI48.
+you will need to catch it and inspect the error message.
+
+=cut
 
 sub to_eui48 {
 
@@ -530,6 +877,12 @@ sub to_eui48 {
     return 1
 }
 
+=head2 to_eui64
+
+Converts to EUI64, or in other words encapsulates EUI48 to become EUI64
+if needed
+
+=cut
 
 sub to_eui64 {
 
@@ -552,6 +905,13 @@ sub to_eui64 {
     return 1
 }
 
+=head1 PROCEDURAL PROPERTY FUNCTIONS
+
+=head2 mac_is_eui48($mac)
+
+Returns true if mac address in $mac is determined to be of the EUI48 standard
+
+=cut
 
 sub mac_is_eui48 {
 
@@ -570,6 +930,11 @@ sub mac_is_eui48 {
 
 }
 
+=head2 mac_is_eui64($mac)
+
+Returns true if mac address in $mac is determined to be of the EUI64 standard
+
+=cut
 
 sub mac_is_eui64 {
 
@@ -588,6 +953,11 @@ sub mac_is_eui64 {
 
 }
 
+=head2 mac_is_multicast($mac)
+
+Returns true if mac address in $mac is determined to be a multicast address
+
+=cut
 
 sub mac_is_multicast {
 
@@ -607,6 +977,11 @@ sub mac_is_multicast {
 }
 
 
+=head2 mac_is_broadcast($mac)
+
+Returns true if mac address in $mac is determined to be a broadcast address
+
+=cut
 
 sub mac_is_broadcast {
 
@@ -625,6 +1000,11 @@ sub mac_is_broadcast {
 
 }
 
+=head2 mac_is_unicast($mac)
+
+Returns true if mac address in $mac is determined to be a unicast address
+
+=cut
 
 sub mac_is_unicast {
 
@@ -643,6 +1023,13 @@ sub mac_is_unicast {
 
 }
 
+=head2 mac_is_vrrp($mac)
+
+Returns true if mac address is $mac is determined to be a Virtual Router Redundancy (VRRP) address
+
+i.e. 00-00-5E-00-01-XX
+
+=cut
 
 sub mac_is_vrrp {
 
@@ -663,6 +1050,13 @@ sub mac_is_vrrp {
 }
 
 
+=head2 mac_is_hsrp($mac)
+
+Returns true if mac address is $mac is determined to be a Hot Standby Router (HSRP) address
+
+i.e. 00-00-0C-07-AC-XX
+
+=cut
 
 sub mac_is_hsrp {
 
@@ -682,6 +1076,13 @@ sub mac_is_hsrp {
 
 }
 
+=head2 mac_is_hsrp2($mac)
+
+Returns true if mac address is $mac is determined to be a Hot Standby Router Version 2 (HSRPv2) address
+
+i.e. 00-00-0C-9F-FX-XX
+
+=cut
 
 sub mac_is_hsrp2 {
 
@@ -701,6 +1102,13 @@ sub mac_is_hsrp2 {
 
 }
 
+=head2 mac_is_msnlb($mac)
+
+Returns true if mac address is $mac is determined to be a MS Network Load Balancing address
+
+i.e. 02-BF-XX-XX-XX-XX or 03-BF-XX-XX-XX-XX
+
+=cut
 
 sub mac_is_msnlb {
 
@@ -720,6 +1128,11 @@ sub mac_is_msnlb {
 
 }
 
+=head2 mac_is_local($mac)
+
+Returns true if mac address in $mac is determined to be locally administered
+
+=cut
 
 sub mac_is_local {
 
@@ -738,6 +1151,11 @@ sub mac_is_local {
 
 }
 
+=head2 mac_is_universal($mac)
+
+Returns true if mac address in $mac is determined to be universally administered
+
+=cut
 
 sub mac_is_universal {
 
@@ -756,6 +1174,15 @@ sub mac_is_universal {
 
 }
 
+=head1 PROCEDURAL NORMALIZATION METHODS
+
+=head2 mac_as_basic($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and without delimiters
+
+ 001122aabbcc
+
+=cut
 
 sub mac_as_basic {
 
@@ -774,6 +1201,14 @@ sub mac_as_basic {
 
 }
 
+=head2 mac_as_bpr($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded, with B<:> delimiting and
+B<1,length> leading. I<length> is the number of hex pairs (6 for EUI48)
+
+ 1,6,00:11:22:aa:bb:cc
+
+=cut
 
 sub mac_as_bpr {
 
@@ -792,6 +1227,14 @@ sub mac_as_bpr {
 
 }
 
+=head2 mac_as_cisco($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<.> delimiting every 2nd octet
+(i.e. after every 4th character)
+
+ 0011.22aa.bbcc
+
+=cut
 
 sub mac_as_cisco {
 
@@ -810,6 +1253,14 @@ sub mac_as_cisco {
 
 }
 
+=head2 mac_as_ieee($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<:> delimiting every octet
+(i.e. after every 2nd character)
+
+ 00:34:56:78:9a:bc
+
+=cut
 
 sub mac_as_ieee {
 
@@ -828,6 +1279,13 @@ sub mac_as_ieee {
 
 }
 
+=head2 mac_as_ipv6_suffix($mac)
+
+Returns the mac address in $mac in the format used for an IPv6 autoconf address suffix
+
+It will convert from eui48 or eui64 if needed
+
+=cut
 
 sub mac_as_ipv6_suffix {
 
@@ -846,6 +1304,14 @@ sub mac_as_ipv6_suffix {
 
 }
 
+=head2 mac_as_microsoft($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
+(i.e. after every 2nd character)
+
+ 00-34-56-78-9a-bc
+
+=cut
 
 sub mac_as_microsoft {
 
@@ -865,6 +1331,14 @@ sub mac_as_microsoft {
 
 }
 
+=head2 mac_as_pgsql($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and a single B<:> delimiter
+in the middle. this format appears in their documentation, along with single dash version
+
+ 003456:789abc
+
+=cut
 
 sub mac_as_pgsql {
 
@@ -884,6 +1358,14 @@ sub mac_as_pgsql {
 
 }
 
+=head2 mac_as_singledash($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and has a dash in the middle of the hex string.
+this appears in the pgsql documentation
+
+ 001122-334455
+
+=cut
 
 sub mac_as_singledash {
 
@@ -903,6 +1385,14 @@ sub mac_as_singledash {
 
 }
 
+=head2 mac_as_sun($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is B<not> padded and with B<-> delimiting every octet
+(i.e. after every 2nd character)
+
+ 0-34-56-78-9a-bc
+
+=cut
 
 sub mac_as_sun {
 
@@ -922,6 +1412,14 @@ sub mac_as_sun {
 
 }
 
+=head2 mac_as_tokenring($mac)
+
+Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
+(i.e. after every 2nd character) and each octet is bit-reversed order. So 10 00 5A 4D BC 96 becomes 08 00 5A B2 3D 69.
+
+ 00-2d-6a-1e-59-3d
+
+=cut
 
 sub mac_as_tokenring {
 
@@ -940,466 +1438,6 @@ sub mac_as_tokenring {
     return as_tokenring( { mac => $mac } )
 
 }
-
-
-1;
-
-__END__
-
-=pod
-
-=encoding UTF-8
-
-=head1 NAME
-
-NetAddr::MAC - MAC address functions and object
-
-=head1 VERSION
-
-version 0.95
-
-=head1 SYNOPSIS
-
- use NetAddr::MAC;
-
- my $mac = NetAddr::MAC->new( '00:11:22:aa:bb:cc' );
- my $mac = NetAddr::MAC->new( mac => '0011.22AA.BBCC' );
-
- print "MAC provided at object creation was: ", $mac->original;
-
- print "EUI48\n" if $mac->is_eui48;
- print "EUI64\n" if $mac->is_eui64;
-
- print "Unicast\n" if $mac->is_unicast;
- print "Multicast\n" if $mac->is_multicast;
- print "Broadcast\n" if $mac->is_broadcast;
-
- print "Locally Administerd\n" if $mac->is_local;
- print "Universally Administered\n" if $mac->is_universal;
-
- print 'Basic Format: ',$mac->as_basic,"\n";
- print 'Bpr Format: ',  $mac->as_bpr,"\n";
- print 'Cisco Format: ',$mac->as_cisco,"\n";
- print 'IEEE Format: ', $mac->as_ieee,"\n";
- print 'IPv6 Address: ',$mac->as_ipv6_suffix,"\n";
- print 'Microsoft Format: ',$mac->as_microsoft,"\n";
- print 'Single Dash Format: ',$mac->as_singledash,"\n";
- print 'Sun Format: ',  $mac->as_sun,"\n";
- print 'Token Ring Format: ', $mac->as_tokenring,"\n";
-
-
- use NetAddr::MAC qw( :all );
-
- my $mac = q/00.11.22.33.44.55/;
-
- print "EUI48\n" if mac_is_eui48($mac);
- print "EUI64\n" if mac_is_eui64($mac);
-
- print "Unicast\n" if mac_is_unicast($mac);
- print "Multicast\n" if mac_is_multicast($mac);
- print "Broadcast\n" if mac_is_broadcast($mac);
-
- print "Locally Administerd\n" if mac_is_local($mac);
- print "Universally Administered\n" if mac_is_universal($mac);
-
- print 'Basic Format: ',mac_as_basic($mac),"\n";
- print 'Bpr Format: ',  mac_as_bpr($mac),"\n";
- print 'Cisco Format: ',mac_as_cisco($mac),"\n";
- print 'IEEE Format: ', mac_as_ieee($mac),"\n";
- print 'IPv6 Address: ',mac_as_ipv6_suffix($mac),"\n";
- print 'Microsoft Format: ',mac_as_microsoft($mac),"\n";
- print 'Single Dash Format: ', mac_as_singledash($mac),"\n";
- print 'Sun Format: ',  mac_as_sun($mac),"\n";
- print 'Token Ring Format: ',mac_as_tokenring($mac),"\n";
-
-=head1 DESCRIPTION
-
-This module provides an interface to deal with Media Access Control (or MAC)
-addresses.  These are the addresses that uniquely identify a device on
-various layer 2 networks. Although the most common case is hardware addresses
-on Ethernet network cards, there are a variety of devices that use this
-system of addressing.
-
-This module supports both Extended Unique Identifier 48 and 64,
-addresses and implements an OO and a functional interface.
-
-Some networks that use Extended Unique Identifier 48 (or MAC48) addresses include:
-
- Ethernet
- 802.11 wireless networks
- Bluetooth
- IEEE 802.5 token ring
- FDDI
- ATM
-
-Some networks that use Extended Unique Identifier 64 addresses include:
-
- Firewire
- IPv6 (sort of)
- ZigBee / 802.15.4 wireless personal-area networks
-
-=for stopwords soe todo
-cisco errstr oui
-fx hsrp HSRPv2 vrrp autoconf
-pgsql unicast
-eui48 eui64
-4th
-
-=head1 NAME
-
-NetAddr::MAC - Handles hardware MAC Addresses (EUI48 and EUI64)
-
-=head1 OO METHODS
-
-=head2 NetAddr::MAC->new( mac => $mac )
-
-Creates and returns a new NetAddr::MAC object.  The MAC value is required.
-
-=head2 NetAddr::MAC->new( mac => $mac, %options )
-
-As above, but %options may include any or none of the following
-
-=over 4
-
-=item * die_on_error
-
-If set to true, errors will result in a die (croak) rather than populating I<$errstr>
-
-B<Take care when using the mac_is_* functions!> they will return false in both
-the case of an error and according to the properties of the MAC address. You will
-therefore need to enable die_on_error or check I<$errstr> when false is returned.
-
-=item * priority
-
-This is the bridge priority as an integer, which can also be set by providing a mac
-address in the following format, where 60 is the priority.
-
- 60#0011.22aa.bbcc
-
-This is a cisco thing, so typically the above is the format you would see. But we
-are flexible enough to handle formats like...
-
- 60#00:11:22:aa:bb:cc
- 60#001122aabbcc
- 60#00-11-22-aa-bb-cc
- etc.
-
-If priority is provided as an option and as part of the mac address string, an
-error will occur only if they differ.
-
-Priority defaults to 0 if not provided.
-
-=back
-
-=head2 NetAddr::MAC->new( $mac )
-
-Simplified creation method
-
-=head2 NetAddr::MAC->new( $mac, %options )
-
-As above but with %options
-
-=head2 original
-
-Returns the original B<mac> string as used when creating the MAC object
-
-=head2 oui
-
-Returns the mac address's Organizationally Unique Identifier (OUI) with dashes
-in Hexadecimal / Canonical format:
-
- AC-DE-48
-
-=head2 errstr
-
-Returns the error (if one occurred).
-
-This is intended for use with the object. Its not exported at all.
-
-Note: this method is used once the NetAddr::MAC object is successfully
-created. For now the to_eui48 method is the only method that will
-return an error once the object is created.
-
-When creating objects, you will need to catch errors with either the
-I<or> function, or the I<eval> way.
-
-=head1 OO PROPERTY METHODS
-
-=head2 is_eui48
-
-Returns true if mac address is determined to be of the EUI48 standard
-
-=head2 is_eui64
-
-Returns true if mac address is determined to be of the EUI64 standard
-
-=head2 is_multicast
-
-Returns true if mac address is determined to be a multicast address
-
-=head2 is_broadcast
-
-Returns true if mac address is determined to be a broadcast address
-
-=head2 is_vrrp
-
-Returns true if mac address is determined to be a Virtual Router Redundancy (VRRP) address
-
-i.e. 00-00-5E-00-01-XX
-
-always returns false for eui64.
-
-I'm not quite sure what to do with 01-00-5E-00-00-12, suggestions welcomed.
-
-=head2 is_hsrp
-
-Returns true if mac address is determined to be a Hot Standby Router (HSRP) address
-
-i.e. 00-00-0C-07-AC-XX
-
-always returns false for eui64.
-
-=head2 is_hsrp2
-
-Returns true if mac address is determined to be a Hot Standby Router Version 2 (HSRPv2) address
-
-i.e. 00-00-0C-9F-FX-XX
-
-always returns false for eui64.
-
-=head2 is_msnlb
-
-Returns true if mac address is determined to be a MS Network Load Balancing MAC address
-
-i.e. 02-BF-1-2-3-4 for unicast or 03-BF-1-2-3-4 for multicast
-
-where 1-2-3-4 is the clusters primary IP address
-
-for outbound packets, clusters members will send from 02-n-1-2-3-4 where n is the node priority. this function does NOT return true for those addresses.
-
-always returns false for eui64.
-
-=head2 is_unicast
-
-Returns true if mac address is determined to be a unicast address
-
-=head2 is_local
-
-Returns true if mac address is determined to be locally administered
-
-=head2 is_universal
-
-Returns true if mac address is determined to be universally administered
-
-=head1 OO NORMALIZATION METHODS
-
-=head2 as_basic
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and without delimiters
-
- 001122aabbcc
-
-=head2 as_bridge_id
-
-Returns mac address with the priority, a hash, then the mac address normalized with I<as_cisco>
-
- 45#0011.22aa.bbcc
-
-=head2 as_bpr
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded with B<:> delimiters and with
-B<1,length> leading where I<length> is the number of hex pairs (i.e. 6 for EUI48)
-
- 1,6,00:11:22:aa:bb:cc
-
-=head2 as_cisco
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<.> delimiting every 2nd octet
-(i.e. after every 4th character)
-.
- 0011.22aa.bbcc
-
-=head2 as_ieee
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<:> delimiting every octet
-(i.e. after every 2nd character)
-
- 00:34:56:78:9a:bc
-
-=head2 as_ipv6_suffix
-
-Returns the EUI64 address in the format used for an IPv6 autoconf address suffix
-
-=head2 as_microsoft
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
-(i.e. after every 2nd character)
-
- 00-34-56-78-9a-bc
-
-=head2 as_pgsql
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and has a I<:> in the middle of the hex string.
-this appears in the pgsql documentation along with the single dash version
-
- 001122:334455
-
-=head2 as_singledash
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and has a dash in the middle of the hex string.
-this appears in the pgsql documentation.
-
- 001122-334455
-
-=head2 as_sun
-
-Returns the mac address normalized as a hexadecimal string that is B<not> padded and with B<-> delimiting every octet
-(i.e. after every 2nd character)
-
- 0-34-56-78-9a-bc
-
-=head2 as_tokenring
-
-Returns the mac address normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
-(i.e. after every 2nd character) and each octet is bit-reversed order. So 10 00 5A 4D BC 96 becomes 08 00 5A B2 3D 69.
-
- 00-2d-6a-1e-59-3d
-
-=head2 to_eui48
-
-Converts to EUI48 (if the EUI64 was derived from EUI48)
-
-This function will fail if the mac was not derived from EUI48.
-you will need to catch it and inspect the error message.
-
-=head2 to_eui64
-
-Converts to EUI64, or in other words encapsulates EUI48 to become EUI64
-if needed
-
-=head1 PROCEDURAL PROPERTY FUNCTIONS
-
-=head2 mac_is_eui48($mac)
-
-Returns true if mac address in $mac is determined to be of the EUI48 standard
-
-=head2 mac_is_eui64($mac)
-
-Returns true if mac address in $mac is determined to be of the EUI64 standard
-
-=head2 mac_is_multicast($mac)
-
-Returns true if mac address in $mac is determined to be a multicast address
-
-=head2 mac_is_broadcast($mac)
-
-Returns true if mac address in $mac is determined to be a broadcast address
-
-=head2 mac_is_unicast($mac)
-
-Returns true if mac address in $mac is determined to be a unicast address
-
-=head2 mac_is_vrrp($mac)
-
-Returns true if mac address is $mac is determined to be a Virtual Router Redundancy (VRRP) address
-
-i.e. 00-00-5E-00-01-XX
-
-=head2 mac_is_hsrp($mac)
-
-Returns true if mac address is $mac is determined to be a Hot Standby Router (HSRP) address
-
-i.e. 00-00-0C-07-AC-XX
-
-=head2 mac_is_hsrp2($mac)
-
-Returns true if mac address is $mac is determined to be a Hot Standby Router Version 2 (HSRPv2) address
-
-i.e. 00-00-0C-9F-FX-XX
-
-=head2 mac_is_msnlb($mac)
-
-Returns true if mac address is $mac is determined to be a MS Network Load Balancing address
-
-i.e. 02-BF-XX-XX-XX-XX or 03-BF-XX-XX-XX-XX
-
-=head2 mac_is_local($mac)
-
-Returns true if mac address in $mac is determined to be locally administered
-
-=head2 mac_is_universal($mac)
-
-Returns true if mac address in $mac is determined to be universally administered
-
-=head1 PROCEDURAL NORMALIZATION METHODS
-
-=head2 mac_as_basic($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and without delimiters
-
- 001122aabbcc
-
-=head2 mac_as_bpr($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded, with B<:> delimiting and
-B<1,length> leading. I<length> is the number of hex pairs (6 for EUI48)
-
- 1,6,00:11:22:aa:bb:cc
-
-=head2 mac_as_cisco($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<.> delimiting every 2nd octet
-(i.e. after every 4th character)
-
- 0011.22aa.bbcc
-
-=head2 mac_as_ieee($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<:> delimiting every octet
-(i.e. after every 2nd character)
-
- 00:34:56:78:9a:bc
-
-=head2 mac_as_ipv6_suffix($mac)
-
-Returns the mac address in $mac in the format used for an IPv6 autoconf address suffix
-
-It will convert from eui48 or eui64 if needed
-
-=head2 mac_as_microsoft($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
-(i.e. after every 2nd character)
-
- 00-34-56-78-9a-bc
-
-=head2 mac_as_pgsql($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and a single B<:> delimiter
-in the middle. this format appears in their documentation, along with single dash version
-
- 003456:789abc
-
-=head2 mac_as_singledash($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and has a dash in the middle of the hex string.
-this appears in the pgsql documentation
-
- 001122-334455
-
-=head2 mac_as_sun($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is B<not> padded and with B<-> delimiting every octet
-(i.e. after every 2nd character)
-
- 0-34-56-78-9a-bc
-
-=head2 mac_as_tokenring($mac)
-
-Returns the mac address in $mac normalized as a hexadecimal string that is 0 padded and with B<-> delimiting every octet
-(i.e. after every 2nd character) and each octet is bit-reversed order. So 10 00 5A 4D BC 96 becomes 08 00 5A B2 3D 69.
-
- 00-2d-6a-1e-59-3d
 
 =head1 ERROR HANDLING
 
@@ -1530,15 +1568,6 @@ be derived from the 'basic' format.
 Feel free to send patches for features you add, I appreciate those who
 have done so far and endeavour to incorporate new patches ASAP.
 
-=head1 AUTHOR
-
-Dean Hamstead <dean@bytefoundry.com.au>
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2017 by Dean Hamstad.
-
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.
-
 =cut
+
+1;
