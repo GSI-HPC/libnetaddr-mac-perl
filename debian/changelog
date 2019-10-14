@@ -1,3 +1,9 @@
+libnetaddr-mac-perl (0.96-3) unstable; urgency=medium
+
+  * Added build with dh-dist-zilla
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Mon, 14 Oct 2019 08:10:11 +0200
+
 libnetaddr-mac-perl (0.96-2) unstable; urgency=medium
 
   * Removed boilerplate
