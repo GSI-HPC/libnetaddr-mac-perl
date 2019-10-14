@@ -2,7 +2,14 @@ Source: libnetaddr-mac-perl
 Section: perl
 Priority: optional
 Maintainer: Felix Jacobi <felix.jacobi@iserv.eu>
-Build-Depends: debhelper (>= 9)
+Build-Depends: debhelper (>= 9),
+  dh-dist-zilla,
+  libdist-zilla-plugin-githubmeta-perl,
+  libdist-zilla-plugin-podspellingtests-perl,
+  libdist-zilla-plugin-podweaver-perl,
+  libdist-zilla-plugin-test-compile-perl,
+  libdist-zilla-plugin-test-kwalitee-perl,
+  libdist-zilla-plugin-test-perl-critic-perl,
 Build-Depends-Indep: perl
 Standards-Version: 3.9.8
 Homepage: https://metacpan.org/release/NetAddr-MAC
