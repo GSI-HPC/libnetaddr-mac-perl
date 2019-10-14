@@ -1,7 +1,7 @@
 Source: libnetaddr-mac-perl
 Section: perl
 Priority: optional
-Maintainer: Felix Jacobi <felix.jacobi@iserv.eu>
+Maintainer: Felix Jacobi <Felix@jacobi-hamburg.net>
 Build-Depends: debhelper (>= 9),
   dh-dist-zilla,
   libdist-zilla-plugin-githubmeta-perl,
