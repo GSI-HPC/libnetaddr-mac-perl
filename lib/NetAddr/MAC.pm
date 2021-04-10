@@ -1,8 +1,9 @@
 #!/bin/false
-# ABSTRACT: MAC address functions and object
+# ABSTRACT: MAC hardware address functions and object (EUI48 and EUI64)
 
 use strict;
 use warnings;
+use v5.10;
 package NetAddr::MAC;
 
 
@@ -90,13 +91,9 @@ cisco errstr oui
 fx hsrp HSRPv2 vrrp autoconf
 pgsql unicast
 eui48 eui64
-4th
+4th vmware xen
 
 =end stopwords
-
-=head1 NAME
-
-NetAddr::MAC - Handles hardware MAC Addresses (EUI48 and EUI64)
 
 =head1 SYNOPSIS
 
@@ -154,14 +151,13 @@ NetAddr::MAC - Handles hardware MAC Addresses (EUI48 and EUI64)
 
 =head1 DESCRIPTION
 
-This module provides an interface to deal with Media Access Control (or MAC)
-addresses.  These are the addresses that uniquely identify a device on
-various layer 2 networks. Although the most common case is hardware addresses
-on Ethernet network cards, there are a variety of devices that use this
-system of addressing.
+This module provides an OO and functional interface to deal with Media Access
+Control (or MAC) addresses. These are the addresses that uniquely identify a
+device on various layer 2 networks. Although the most common case is hardware
+addresses on Ethernet network cards, there are a variety of devices that use
+this system of addressing.
 
-This module supports both Extended Unique Identifier 48 and 64,
-addresses and implements an OO and a functional interface.
+Both Extended Unique Identifier 48 and 64 addresses are supported.
 
 Some networks that use Extended Unique Identifier 48 (or MAC48) addresses include:
 
@@ -180,11 +176,16 @@ Some networks that use Extended Unique Identifier 64 addresses include:
 
 =head1 OO METHODS
 
-=head2 NetAddr::MAC->new( mac => $mac )
+=head2 new
+
+The B<new> method creates instances of this object. It can be called
+in any of the following ways.
+
+=head3 NetAddr::MAC->new( mac => $mac )
 
 Creates and returns a new NetAddr::MAC object.  The MAC value is required.
 
-=head2 NetAddr::MAC->new( mac => $mac, %options )
+=head3 NetAddr::MAC->new( mac => $mac, %options )
 
 As above, but %options may include any or none of the following
 
@@ -220,11 +221,11 @@ Priority defaults to 0 if not provided.
 
 =back
 
-=head2 NetAddr::MAC->new( $mac )
+=head3 NetAddr::MAC->new( $mac )
 
 Simplified creation method
 
-=head2 NetAddr::MAC->new( $mac, %options )
+=head3 NetAddr::MAC->new( $mac, %options )
 
 As above but with %options
 
@@ -396,6 +397,56 @@ sub new {
 
         return
     }
+
+}
+
+=head2 random
+
+As an alternative to L</new>, a "random" mac access based upon the provided
+B<oui> argument.
+
+Please consider the following information when selecting an OUI.
+
+If the first octal/digit/number is odd, then the MAC address L</is_multicast>
+
+OUI's used by virtualization software:
+
+Xen's prefix 00:16:3e
+VMware's prefix 00:50:56
+
+There are 4 sets of 'Locally Administered Address Ranges' that can be used
+without fear of conflict (from actual hardware):
+
+ x2-xx-xx-xx-xx-xx
+ x6-xx-xx-xx-xx-xx
+ xA-xx-xx-xx-xx-xx
+ xE-xx-xx-xx-xx-xx
+
+=cut
+
+sub random {
+
+    my ( $p, @q ) = @_;
+    my $c = ref($p) || $p;
+    my $self = bless {}, $c;
+
+    # clear the errstr, see also RT96045
+    $NetAddr::MAC::errstr = undef;
+
+    unless (@q) {
+        my $e = q|Please provide an oui prefix|;
+        croak "$e\n" if $NetAddr::MAC::die_on_error;
+        $NetAddr::MAC::errstr = $e;
+        return
+    }
+
+    die 'TODO';
+
+    # massage a single argument into a mac argument if needed
+    $self->_init( @q % 2 ? ( oui => shift @q, @q ) : @q )
+      or return;
+
+    return $self
 
 }
 
@@ -1543,7 +1594,7 @@ Many young people like to use Github, so by all means send me pull requests at
 =head1 MOTIVATION
 
 There are lots of systems at my (then) place of work which handle MAC
-addresses. There was lots of code validating and normalising them all over
+addresses. There was lots of code validating and normalizing them all over
 the place - most of it was quirky and sloppy. So I set about creating a
 reusable module to add to our SOE install so that MAC address handling
 would become consistent, reliable, powerful and trivial.
@@ -1559,7 +1610,7 @@ dependencies and avoiding anything that doesn't work on perl 5.6
 
 I hope that the result is useful to others, the concept is to be able to create
 an object representing a MAC address based on a string that only very vaguely
-resembles a MAC address. From there, to be able to output normalised string
+resembles a MAC address. From there, to be able to output normalized string
 representations of the mac address in a variety of common formats.
 
 A templating function is deliberately omitted, as very niche outputs can easily
