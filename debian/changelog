@@ -1,9 +1,14 @@
-libnetaddr-mac-perl (0.97-1) UNRELEASED; urgency=medium
+libnetaddr-mac-perl (0.97-1) unstable; urgency=medium
 
   * d/c: Updated maintainer email address
   * New upstream version 0.97
+  * Lintian: Fixed unusual-interpreter in MAC.pm
+  * Lintian: Fixed unusual-interpreter in MAC.pm
+  * Bump compat level to 13, bump Standards-Version to 4.5.0
+  * Lintian: Fixed unusual-interpreter in MAC.pm
+  * Bump compat level to 13, bump Standards-Version to 4.5.0
 
- -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sat, 10 Apr 2021 23:15:26 +0200
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sun, 11 Apr 2021 00:03:43 +0200
 
 libnetaddr-mac-perl (0.96-3) unstable; urgency=medium
 
