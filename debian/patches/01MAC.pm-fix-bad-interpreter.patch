@@ -1,0 +1,14 @@
+Description: Removes bad interpreter /bin/false from MAC.pm
+Author: Felix Jacobi <Felix@jacobi-hamburg.net>
+Origin: other
+Forwarded: not-needed
+Reviewed-By: Felix Jacobi <Felix@jacobi-hamburg.net>
+Last-Update: 2021-04-10
+
+--- libnetaddr-mac-perl-0.97.orig/lib/NetAddr/MAC.pm
++++ libnetaddr-mac-perl-0.97/lib/NetAddr/MAC.pm
+@@ -1,4 +1,3 @@
+-#!/bin/false
+ # ABSTRACT: MAC hardware address functions and object (EUI48 and EUI64)
+ 
+ use strict;
