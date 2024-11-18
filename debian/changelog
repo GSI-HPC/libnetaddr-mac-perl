@@ -1,3 +1,11 @@
+libnetaddr-mac-perl (0.97-2) unstable; urgency=medium
+
+  * Add missing dependencies
+  * Disable Dist::Zilla plugins not packaged for Debian
+  * Ignore failures of dh_dzil_clean
+
+ -- Christopher Huhn <C.Huhn@gsi.de>  Mon, 18 Nov 2024 15:03:51 +0100
+
 libnetaddr-mac-perl (0.97-1) unstable; urgency=medium
 
   * d/c: Updated maintainer email address
