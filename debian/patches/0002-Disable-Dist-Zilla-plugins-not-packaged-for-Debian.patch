@@ -1,0 +1,90 @@
+From: Christopher Huhn <C.Huhn@gsi.de>
+Date: Mon, 18 Nov 2024 14:08:34 +0100
+Subject: Disable Dist::Zilla plugins not packaged for Debian
+
+---
+ dist.ini | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/dist.ini b/dist.ini
+index a6b0d5e..e88189e 100755
+--- a/dist.ini
++++ b/dist.ini
+@@ -11,12 +11,12 @@ main_module = lib/NetAddr/MAC.pm
+ ; Stuff that generates files
+ [ModuleBuild]
+ [CPANFile]
+-[DOAP]
++;[DOAP]
+ [GithubMeta]
+ [MetaJSON]
+ [MetaTests]
+-[Git::Contributors]
+-[ContributorsFile]
++;[Git::Contributors]
++;[ContributorsFile]
+ ; [TravisYML] # use our own for now
+ 
+ [MetaNoIndex]
+@@ -36,28 +36,28 @@ critic_config = t/.perlcriticrc
+ ;[PerlTidy]
+ ;perltidyrc = t/.perltidyrc
+ [Test::Compile]
+-[Test::Kwalitee::Extra]
+-[Test::EOF]
++;[Test::Kwalitee::Extra]
++;[Test::EOF]
+ [Test::EOL]
+-[Test::Legal]
++;[Test::Legal]
+ [Test::NoTabs]
+-[Test::PAUSE::Permissions]
+-[Test::Portability]
++;[Test::PAUSE::Permissions]
++;[Test::Portability]
+ [Test::PodSpelling]
+ stopword = EUI
+ stopword = virtualization
+ ;[Test::Pod::LinkCheck]
+-[Test::Pod::No404s]
++;[Test::Pod::No404s]
+ [Test::ReportPrereqs]
+-[Test::NoBreakpoints]
+-[Test::UnusedVars]
++;[Test::NoBreakpoints]
++;[Test::UnusedVars]
+ ; croak & first leak, but oh well
+ ;[Test::CleanNamespaces]
+ [PodCoverageTests]
+ [PodSyntaxTests]
+-[RunExtraTests]
+-[CheckChangeLog]
+-[SchwartzRatio]
++;[RunExtraTests]
++;[CheckChangeLog]
++;[SchwartzRatio]
+ 
+ ; Stuff that changes my code
+ [PkgVersion]
+@@ -66,17 +66,17 @@ die_on_existing_version = 1
+ [PodWeaver]
+ 
+ ; Stuff that plays with Git
+-[Git::CheckFor::CorrectBranch] ; ensure on master branch
+-[Git::Remote::Check]
++;[Git::CheckFor::CorrectBranch] ; ensure on master branch
++;[Git::Remote::Check]
+ [Git::Tag]
+ 
+ ; Clear the travis.yml file when rolling a tarball
+ [PruneCruft]
+ except = ^\.travis.yml
+ 
+-[Clean]
++;[Clean]
+ 
+-[MinimumPerl]
++;[MinimumPerl]
+ [Prereqs]
+ Carp         = 0
+ List::Util   = 0
