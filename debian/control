@@ -4,12 +4,18 @@ Priority: optional
 Maintainer: Felix Jacobi <Felix@jacobi-hamburg.net>
 Build-Depends: debhelper-compat (= 13),
   dh-dist-zilla,
+  libdist-zilla-plugin-git-perl,
   libdist-zilla-plugin-githubmeta-perl,
   libdist-zilla-plugin-podspellingtests-perl,
   libdist-zilla-plugin-podweaver-perl,
   libdist-zilla-plugin-test-compile-perl,
+  libdist-zilla-plugin-test-eol-perl,
   libdist-zilla-plugin-test-kwalitee-perl,
+  libdist-zilla-plugin-test-notabs-perl,
   libdist-zilla-plugin-test-perl-critic-perl,
+  libdist-zilla-plugin-test-reportprereqs-perl,
+  libmodule-build-perl,
+  libtest-trap-perl,
 Build-Depends-Indep: perl
 Standards-Version: 4.5.0
 Homepage: https://metacpan.org/release/NetAddr-MAC
