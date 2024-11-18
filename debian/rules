@@ -2,3 +2,7 @@
 
 %:
 	dh $@ --with dist_zilla
+
+clean:
+# dh_dzil_clean will fail with an unpatched dist.ini:
+	-dh $@ --with dist_zilla
